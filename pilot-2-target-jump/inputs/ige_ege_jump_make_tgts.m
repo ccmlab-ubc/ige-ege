@@ -39,7 +39,6 @@ online_fb(pert_start + 1:2:end) = vis_fb;
 endpoint_fb = online_fb;
 
 for subnum = 1
-        
     % Constant values
     T.trialnum = (1:total_trials)';
     T.tgt_dist = ones(total_trials, 1)*90;
