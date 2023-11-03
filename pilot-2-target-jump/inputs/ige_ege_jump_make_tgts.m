@@ -78,7 +78,6 @@ for subnum = 1
             fprintf(fid,'%3.2f\t',set(i,j));
         end
     end
-    fclose(fid)
-    
+    fclose(fid)   
 end
 
