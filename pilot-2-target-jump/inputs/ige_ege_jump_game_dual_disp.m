@@ -40,40 +40,6 @@ black = BlackIndex(screenSubj);
 [windowInv, windowRectInv] = PsychImaging('OpenWindow', screenInv, black);
 WinTabMex(0, windowSubj); %Initialize tablet driver, connect it to 'win'
 ListenChar(2)% 
-% Get the size of the on screen window
-%[screenXpixels, screenYpixels] = Screen('WindowSize', window);
-
-% Load cursor image
-[cursor_img, ~, cursor_alpha] = imread('cursor.png');
-cursor_img(:,:,4) = cursor_alpha(:,:);
-
-mm2pixel = 3.6137;
-cursortext=Screen('MakeTexture', windowSubj, cursor_img);
-cursor_r = 1.5*mm2pixel;
-
-% Load target file
-cd('TargetFiles')
-
-% name_prefix = 'S1'; % dummy for now
-% % pscyhtest = load([tgt_file_name_prefix,tgt_set,'.tgt']);
-% tgt_file_name_prefix = 'tgt';
-% tgt_set = '2';
-tgt_file = dlmread([tgt_file_name_prefix,tgt_set,'.tgt'], '\t', 1, 0); % start reading in from 2nd row, 1st column
-trial_num = tgt_file(:,1);
-tgt_dist = tgt_file(:,2).*mm2pixel;
-tgt_ang_1 = tgt_file(:,3);
-tgt_ang_2 = tgt_file(:, 4);
-rotation = tgt_file(:, 5);
-gain = tgt_file(:, 6);
-fixed = [];
-ccw = 0;
-online_fb = tgt_file(:, 7);
-endpoint_fb = tgt_file(:, 8);
-clamped_feedback = tgt_file(:, 9);
-between_blocks = tgt_file(:, 10);
-targetsize = tgt_file(1, 11);
-numtrials = size(tgt_file, 1);
-maxtrialnum = max(numtrials);
 
 % Query the frame duration
 ifi = Screen('GetFlipInterval', windowSubj);
@@ -93,7 +59,76 @@ Screen('TextSize', windowSubj, 28);
 Screen('BlendFunction', windowSubj, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 Screen('BlendFunction', windowInv, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-% some variables
+% Load cursor image
+[cursor_img, ~, cursor_alpha] = imread('cursor.png');
+cursor_img(:,:,4) = cursor_alpha(:,:);
+mm2pixel = 3.6137;
+cursortext = Screen('MakeTexture', windowSubj, cursor_img);
+cursor_r = 1.5*mm2pixel;
+
+% There should be 2540 lines per inch (lpi) on tablet, and tablet active
+% area is 19.2 in x 12.0 in. Need to convert tablet lines into pixel space. 
+% If there are 2540 lines per inch on tablet, that means a line is equal to
+% 1/2540th of an inch OR 1/1000th of a cm OR 1/100th of a mm. Therefore, 
+% conversion factor for 1 line requires mm2pixel * 0.01. Offsets are 
+% defined as origin of tablet (bottom left) relative to origin of monitor
+% (top left, when oriented same way as tablet).
+if flipped_monitor == 1
+    % For flipped monitor:
+    tablet_x_scale = -0.036137; % mm2pixel*0.01
+    tablet_x_offset = 19.28*2540; % first value is offset in inches
+    tablet_y_scale = 0.036137;
+    tablet_y_offset = 0.2*2540;
+else
+    % For monitor in standard orientation
+    tablet_x_scale = 0.036137;
+    tablet_x_offset = -0.48*2540;
+    tablet_y_scale = -0.036137;
+    tablet_y_offset = 12.218*2540;
+end
+
+% Load target file
+cd('target-files')
+
+% Read in target file
+tgt_file = dlmread([tgt_file_name_prefix,tgt_set,'.tgt'], '\t', 1, 0); % start reading in from 2nd row, 1st column
+trial_num = tgt_file(:,1);
+tgt_dist = tgt_file(:,2).*mm2pixel;
+tgt_ang_1 = tgt_file(:,3);
+tgt_ang_2 = tgt_file(:, 4);
+rotation = tgt_file(:, 5);
+gain = tgt_file(:, 6);
+fixed = [];
+ccw = 0; 
+online_fb = tgt_file(:, 7);
+endpoint_fb = tgt_file(:, 8);
+clamped_feedback = tgt_file(:, 9);
+between_blocks = tgt_file(:, 10);
+targetsize = tgt_file(1, 11);
+numtrials = size(tgt_file, 1);
+maxtrialnum = max(numtrials);
+% Target locations for target jumps
+if flipped_monitor
+    tgtx_1_subj = xCenterSubj - tgt_dist.*cosd(tgt_ang_1);
+    tgty_1_subj = yCenterSubj + tgt_dist.*sind(tgt_ang_1);
+    tgtx_2_subj = xCenterSubj - tgt_dist.*cosd(tgt_ang_2);
+    tgty_2_subj = yCenterSubj + tgt_dist.*sind(tgt_ang_2);
+else
+    tgtx_1_subj = xCenterSubj + tgt_dist.*cosd(tgt_ang_1);
+    tgty_1_subj = yCenterSubj - tgt_dist.*sind(tgt_ang_1);
+    tgtx_2_subj = xCenterSubj + tgt_dist.*cosd(tgt_ang_2);
+    tgty_2_subj = yCenterSubj - tgt_dist.*sind(tgt_ang_2);
+end
+tgtloc_1_subj = [tgtx_1_subj tgty_1_subj];
+tgtloc_2_subj = [tgtx_2_subj tgty_2_subj];
+tgtx_1_inv = xCenterInv + tgt_dist.*cosd(tgt_ang_1);
+tgty_1_inv = yCenterInv - tgt_dist.*sind(tgt_ang_1);
+tgtx_2_inv = xCenterInv + tgt_dist.*cosd(tgt_ang_2);
+tgty_2_inv = yCenterInv - tgt_dist.*sind(tgt_ang_2);
+tgtloc_1_inv = [tgtx_1_inv tgty_1_inv];
+tgtloc_2_inv = [tgtx_2_inv tgty_2_inv];
+
+% Set game constants
 start_tolerance = 10*mm2pixel;  
 movement_dist_thresh = 10*mm2pixel;
 movement_time_thresh = 0.5;
@@ -128,72 +163,26 @@ gamephase = 0;
 trial = 1;
 cursor = [];
 
-% Target location:
-if flipped_monitor
-    tgtx_1_subj = xCenterSubj - tgt_dist.*cosd(tgt_ang_1);
-    tgty_1_subj = yCenterSubj + tgt_dist.*sind(tgt_ang_1);
-    tgtx_2_subj = xCenterSubj - tgt_dist.*cosd(tgt_ang_2);
-    tgty_2_subj = yCenterSubj + tgt_dist.*sind(tgt_ang_2);
-else
-    tgtx_1_subj = xCenterSubj + tgt_dist.*cosd(tgt_ang_1);
-    tgty_1_subj = yCenterSubj - tgt_dist.*sind(tgt_ang_1);
-    tgtx_2_subj = xCenterSubj + tgt_dist.*cosd(tgt_ang_2);
-    tgty_2_subj = yCenterSubj - tgt_dist.*sind(tgt_ang_2);
-end
-tgtloc_1_subj = [tgtx_1_subj tgty_1_subj];
-tgtloc_2_subj = [tgtx_2_subj tgty_2_subj];
-tgtx_1_inv = xCenterInv + tgt_dist.*cosd(tgt_ang_1);
-tgty_1_inv = yCenterInv - tgt_dist.*sind(tgt_ang_1);
-tgtx_2_inv = xCenterInv + tgt_dist.*cosd(tgt_ang_2);
-tgty_2_inv = yCenterInv - tgt_dist.*sind(tgt_ang_2);
-tgtloc_1_inv = [tgtx_1_inv tgty_1_inv];
-tgtloc_2_inv = [tgtx_2_inv tgty_2_inv];
-
 % hit will be any part of cursor touching target
 hit_tolerance = targetsize./2 + cursor_r;
-
-% There should be 2540 lines per inch (lpi) on tablet, and tablet active
-% area is 19.2 in x 12.0 in. Need to convert tablet lines into pixel space. 
-% If there are 2540 lines per inch on tablet, that means a line is equal to
-% 1/2540th of an inch OR 1/1000th of a cm OR 1/100th of a mm. Therefore, 
-% conversion factor for 1 line requires mm2pixel * 0.01. Offsets are 
-% defined as origin of tablet (bottom left) relative to origin of monitor
-% (top left, when oriented same way as tablet).
-if flipped_monitor == 1
-    % For flipped monitor:
-    tablet_x_scale = -0.036137; % mm2pixel*0.01
-    tablet_x_offset = 19.28*2540; % first value is offset in inches
-    tablet_y_scale = 0.036137;
-    tablet_y_offset = 0.2*2540;
-else
-    % For monitor in standard orientation
-    tablet_x_scale = 0.036137;
-    tablet_x_offset = -0.48*2540;
-    tablet_y_scale = -0.036137;
-    tablet_y_offset = 12.218*2540;
-end
 
 WinTabMex(2); %Empties the packet queue in preparation for collecting actual data
 
 % Set the mouse to the center of the screen to start with
 HideCursor;
 
-% Set sampling rate of game loop
-desiredSampleRate = 500;
-k = 0;
-tab_k = 15;
-
 % Define the ESC key
 KbName('UnifyKeynames');
 esc = KbName('ESCAPE');
 space = KbName('SPACE');
 
+% Variables that store data by trial
 hand_angle = nan(maxtrialnum,1);
 hand_dist_trial = nan(maxtrialnum,1);
 hX_ep = nan(maxtrialnum,1);
 hY_ep = nan(maxtrialnum,1);
 
-% Variables that store data -all copied from Ryan's code
+% Variables that store data by sample
 MAX_SAMPLES=6e6; %about 1 hour @ 1.6kHz = 60*60*1600
 % timevec=nan(MAX_SAMPLES,1);
 % delay_calc_time=nan(MAX_SAMPLES,1);
@@ -215,6 +204,11 @@ start_x_move = nan(MAX_SAMPLES,1);
 start_y_move = nan(MAX_SAMPLES,1);
 rotation_move = nan(MAX_SAMPLES,1);
 hand_dist_all = nan(MAX_SAMPLES,1);
+
+% Set sampling rate of game loop
+desiredSampleRate = 500;
+k = 0;
+tab_k = 15;
 
 tic;
 begintime = GetSecs;
@@ -443,7 +437,7 @@ while trial <= maxtrialnum
             Screen('DrawText', windowInv, 'Great job!' , xCenterInv-100, yCenterInv, white);
         elseif between_blocks(trial) == 2
             DrawFormattedText(windowSubj, 'Try to hit the target with your cursor by reaching as quickly and accurately as possible.', 'center', 'center', white, [], 1, 1);
-            Screen('DrawText', windowInv, 'Try to hit the target with your cursor by reaching as quickly and accurately as possible.', xCenterInv-600, yCenterInv, white);
+            DrawFormattedText(windowInv, 'Try to hit the target with your cursor by reaching as quickly and accurately as possible.', 'center', 'center', white);
         elseif between_blocks(trial) == 3
             Screen('DrawText', windowSubj, 'You will no longer get to see the white cursor during your reach.' , xCenterSubj-300, yCenterSubj, white);
             Screen('DrawText', windowSubj, 'Continue to reach quickly and accurately to the target.' , xCenterSubj-300, yCenterSubj, white);
@@ -456,7 +450,7 @@ while trial <= maxtrialnum
             Screen('DrawText', windowInv, 'The white cursor will only appear when you are close to the start position.' , xCenterInv-430, yCenterInv, white);
         elseif between_blocks(trial) == 5
             DrawFormattedText(windowSubj, 'Thank you for participating in our study!', 'center', 'center', white, [], 1, 1);
-            Screen('DrawText', windowInv, 'Thank you for participating in our study!' , xCenterInv-250, yCenterInv, white);
+            DrawFormattedText(windowInv, 'Thank you for participating in our study!' ,  'center', 'center', white);
         else
             gamephase = 0;
             fb_time = 0;
@@ -559,7 +553,7 @@ cursor_x(:,1) = cursorPoints(:,1) - xCenterSubj;
 cursor_y(:,1) = (cursorPoints(:,2) - yCenterSubj)*(-1); % adjust for other monitor points
 
 %
-cd('..\Data')
+cd('..\..\data')
 
 % Save data
 name_prefix_all = [name_prefix, '_',tgt_file_name_prefix];
