@@ -435,8 +435,8 @@ while trial <= maxtrialnum
             Screen('DrawText', windowSubj, 'Great job!' , xCenterSubj-100, yCenterSubj, white);
             Screen('DrawText', windowInv, 'Great job!' , xCenterInv-100, yCenterInv, white);
         elseif between_blocks(trial) == 2
-            DrawFormattedText(windowSubj, 'Try to hit the target with your cursor by reaching as quickly and accurately as possible.', 'center', 'center', white, [], 1, 1);
-            DrawFormattedText(windowInv, 'Try to hit the target with your cursor by reaching as quickly and accurately as possible.', 'center', 'center', white);
+            DrawFormattedText(windowSubj, 'Reach to the target as quickly and accurately as possible.', 'center', 'center', white, [], 1, 1);
+            DrawFormattedText(windowInv, 'Reach to the target as quickly and accurately as possible.', 'center', 'center', white);
         elseif between_blocks(trial) == 3
             Screen('DrawText', windowSubj, 'You will no longer get to see the white cursor during your reach.' , xCenterSubj-300, yCenterSubj, white);
             Screen('DrawText', windowSubj, 'Continue to reach quickly and accurately to the target.' , xCenterSubj-300, yCenterSubj, white);
