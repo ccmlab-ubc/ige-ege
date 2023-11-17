@@ -13,7 +13,7 @@ analyzeDir='/Users/hyosubkim/Documents/GitHub/Projects/ige-ege/experiment-1/resu
 cd(dataDir);
 
 
-subj = {'s01_ige_ege_jump'};
+subj = {'s01_ige_ege_jump', 's02_ige_ege_jump'};
 
 %%% look for table. if it's there, we will append stuff. look to see how
 %%% many subjects are in existing table. 
