@@ -329,15 +329,26 @@ while trial <= maxtrialnum
         Screen('DrawDots', windowSubj, [xCenterSubj yCenterSubj], startcirclewidth, yellow, [], 2);
         Screen('DrawDots', windowInv, [xCenterInv yCenterInv], startcirclewidth, yellow, [], 2);
 
+%         % Check whether trial had online fb or not
+%         if (trial > 1) && (online_fb(trial - 1, 1) == 1)
+%             visible = 1;
+%         else
+%             %if hand is within start tolerance, show cursor
+%             if hand_dist < start_tolerance
+%                 visible = 1;
+%             else
+%                 visible = 1; % Setting to always visible on trial 1
+%             end
+%     end
+
         % Check whether trial had online fb or not
-        if (trial > 1) && (online_fb(trial - 1, 1) == 1)
+        if (trial == 1) || (online_fb(trial - 1, 1) == 1)
             visible = 1;
         else
-            %if hand is within start tolerance, show cursor
             if hand_dist < start_tolerance
                 visible = 1;
             else
-                visible = 1; % Setting to always visible on trial 1
+                visible = 0;
             end
         end
         
