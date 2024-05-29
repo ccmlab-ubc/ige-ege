@@ -6,14 +6,14 @@ clear all; close all
 
 tic
 
-baseDir= '/Users/hyosubkim/Documents/GitHub/Projects/ige-ege/experiment-3/scripts';
-dataDir='/Users/hyosubkim/Library/CloudStorage/OneDrive-UBC/projects/ige-ege/experiment-3/';
-analyzeDir='/Users/hyosubkim/Documents/GitHub/Projects/ige-ege/experiment-3/results';
+% baseDir= '/Users/hyosubkim/Documents/GitHub/Projects/ige-ege/experiment-2/scripts';
+% dataDir='/Users/hyosubkim/Library/CloudStorage/OneDrive-UBC/projects/ige-ege/experiment-2/';
+% analyzeDir='/Users/hyosubkim/Documents/GitHub/Projects/ige-ege/experiment-2/results';
 
 cd(dataDir);
 
 
-subj = {'s01_ige_ege_nofb', 's02_ige_ege_nofb'};
+subj = {};
 
 %%% look for table. if it's there, we will append stuff. look to see how
 %%% many subjects are in existing table. 
@@ -235,12 +235,12 @@ for s = 1:length(newSubj)
     D.ST = SearchTimes';
     D.radvelmax = S.radvelmax;
       
-    V.hx = S.hx';
-    V.hy = S.hy';
-    V.absvel = S.absvel';
-    V.absacc = S.absacc';
-    V.hdist = S.hdist';
-    V.radvel = S.radvel';
+    V.hx = S.hx;
+    V.hy = S.hy;
+    V.absvel = S.absvel;
+    V.absacc = S.absacc;
+    V.hdist = S.hdist;
+    V.radvel = S.radvel;
     
     movement_cycle = ceil([1:length(D.TN)]/tpe)';
     D.TN(1:length(D.TN)) = 1:length(D.TN);
@@ -265,10 +265,9 @@ seconds = 60*(mean_elapsed_experiment_time  - floor(mean_elapsed_experiment_time
 
 cd(analyzeDir)
 
-save('ige_ege_nofb_table.mat','T');
-save('ige_ege_nofb_movefile_table.mat','M');
-writetable(T, 'ige_ege_nofb.csv', 'Delimiter', ',')
-% writetable(M, 'ige_ege_movefile_nofb.csv', 'Delimiter', ',')
+save('ige_ege_nospe_table.mat','T');
+save('ige_ege_nospe_movefile_table.mat','M');
+writetable(T, 'ige_ege_nospe.csv', 'Delimiter', ',')
 
 
 toc
