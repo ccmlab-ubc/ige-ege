@@ -13,7 +13,7 @@ analyzeDir='/Users/hyosubkim/Documents/GitHub/Projects/ige-ege/experiment-3/resu
 cd(dataDir);
 
 
-subj = {'s01_ige_ege_nofb', 's02_ige_ege_nofb'};
+subj = {'s01_ige_ege_nofb', 's02_ige_ege_nofb', 's03_ige_ege_nofb'};
 
 %%% look for table. if it's there, we will append stuff. look to see how
 %%% many subjects are in existing table. 
@@ -76,17 +76,23 @@ for s = 1:length(newSubj)
 %     S.tgtpos(1:nt,2) = [yCenterSubj-tgtlocSubj(1,2)];
     D = [];
     V = [];
-    Z = [];
-
-    Z.move_trial = trial_move;
+    Z = table();
+    
+    % For movement file containing all recorded samples
+    Z.trial = trial_move;
     Z.gamephase = gamephase_move;
+    Z.hand_x = hand_x * -1 * pixel2mm;  % bc of flipped monitor
+    Z.hand_y = hand_y * -1 * pixel2mm;
+    Z.cursor_x = cursor_x * -1 * pixel2mm;
+    Z.cursor_y = cursor_y * -1 * pixel2mm;
+    Z.rotation = rotation_move;
     
     for i=1:nt
         
         %hand_dist = sqrt(hand_x.^2 + hand_y.^2);
         
         % trimming hand data
-        idx1 = find(Z.move_trial==i & Z.gamephase==2);
+        idx1 = find(Z.trial==i & Z.gamephase==2);
         %idx2 = find(Z.move_trial==i+1 & Z.gamephase==0,100);
         idx = [idx1];
         if length(idx)<=maxReachTime
@@ -162,7 +168,6 @@ for s = 1:length(newSubj)
     S.radvelmax = S.radvelmax';
     S.radvelmax_idx = S.radvelmax_idx';
     
-    
     for k = 1:nt
         
 %         S.xf(k,1) = S.hx(k,Nii(k));
@@ -235,23 +240,28 @@ for s = 1:length(newSubj)
     D.ST = SearchTimes';
     D.radvelmax = S.radvelmax;
       
-    V.hx = S.hx';
-    V.hy = S.hy';
-    V.absvel = S.absvel';
-    V.absacc = S.absacc';
-    V.hdist = S.hdist';
-    V.radvel = S.radvel';
+%     V.hx = S.hx';
+%     V.hy = S.hy';
+%     V.absvel = S.absvel';
+%     V.absacc = S.absacc';
+%     V.hdist = S.hdist';
+%     V.radvel = S.radvel';
     
     movement_cycle = ceil([1:length(D.TN)]/tpe)';
     D.TN(1:length(D.TN)) = 1:length(D.TN);
     D.move_cycle = movement_cycle;
             
     temp = struct2table(D);
-    tempmove = struct2table(V);
+%     tempmove = struct2table(V);
     
+    % Only include data during movement
+    mask = (Z.gamephase == 0 | Z.gamephase == 1 | Z.gamephase == 3 | Z.gamephase == 4);  
+    Z(mask, :) = [];
+    Z.subj = ones(height(Z), 1) * str2num(subj{s}(2:3));
+
     % index starting with trial 33, since first 32 trials were practice
     T = [T;temp(startofexpmt:end,:)];
-    M = [M;tempmove(startofexpmt:end,:)];
+    M = [M; Z];
     
     elapsed_times(s) = elapsedTime;
     
@@ -266,9 +276,9 @@ seconds = 60*(mean_elapsed_experiment_time  - floor(mean_elapsed_experiment_time
 cd(analyzeDir)
 
 save('ige_ege_nofb_table.mat','T');
-save('ige_ege_nofb_movefile_table.mat','M');
+% save('ige_ege_nofb_movefile_table.mat','M');
 writetable(T, 'ige_ege_nofb.csv', 'Delimiter', ',')
-% writetable(M, 'ige_ege_movefile_nofb.csv', 'Delimiter', ',')
+writetable(M, 'ige_ege_movefile_nofb.csv', 'Delimiter', ',')
 
 
 toc
