@@ -13,7 +13,8 @@ analyzeDir='/Users/hyosubkim/Documents/GitHub/Projects/ige-ege/experiment-3/resu
 cd(dataDir);
 
 
-subj = {'s01_ige_ege_nofb', 's02_ige_ege_nofb', 's03_ige_ege_nofb'};
+subj = {'s01_ige_ege_nofb', 's02_ige_ege_nofb', 's03_ige_ege_nofb', 's04_ige_ege_nofb',...
+    's05_ige_ege_nofb'};
 
 %%% look for table. if it's there, we will append stuff. look to see how
 %%% many subjects are in existing table. 
@@ -257,6 +258,8 @@ for s = 1:length(newSubj)
     % Only include data during movement
     mask = (Z.gamephase == 0 | Z.gamephase == 1 | Z.gamephase == 3 | Z.gamephase == 4);  
     Z(mask, :) = [];
+    nanmask = isnan(Z.trial);
+    Z(nanmask, :) = [];
     Z.subj = ones(height(Z), 1) * str2num(subj{s}(2:3));
 
     % index starting with trial 33, since first 32 trials were practice
