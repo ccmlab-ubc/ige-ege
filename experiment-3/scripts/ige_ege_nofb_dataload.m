@@ -14,7 +14,7 @@ cd(dataDir);
 
 
 subj = {'s01_ige_ege_nofb', 's02_ige_ege_nofb', 's03_ige_ege_nofb', 's04_ige_ege_nofb',...
-    's05_ige_ege_nofb', 's06_ige_ege_nofb', 's07_ige_ege_nofb'};
+    's05_ige_ege_nofb', 's06_ige_ege_nofb', 's07_ige_ege_nofb', 's08_ige_ege_nofb_HYO'};
 
 %%% look for table. if it's there, we will append stuff. look to see how
 %%% many subjects are in existing table. 
