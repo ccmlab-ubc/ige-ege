@@ -165,3 +165,101 @@ def rem(sigma_comb, s, c, bias, sigma_motor, num_trials, vis_fb, rotation,
             x_hand[i + 1] = bias + x_stl[i + 1] + np.random.normal(0, sigma_motor)
         
     return x_stl, x_hand
+
+
+def piece(sigma_pert, sigma_comb, bias, sigma_motor, num_trials, vis_fb, 
+          rotation, fit=False, x_hand=None):
+    '''
+    Model parameters
+        sigma_comb: combination of sigma_prop and sigma_pred
+        sigma_motor
+         
+    Returns
+        x_state : state estimate
+        x_f : motor output
+    '''
+    
+    # Function for computing Gaussian log-probabilities
+    f = lambda x, mu, sigma: -0.5 * np.log(2 * np.pi * sigma**2) - 0.5 * (x - mu)**2 / sigma**2
+    
+    # Possible endpoint locations
+    x_grid = np.arange(-15, 15, 0.1)  
+
+    # For vectorized code
+    x_fs = x_grid.reshape((len(x_grid), 1))  # possible finger endpoint locations (col vec)
+    d_xvs = x_grid.reshape((1, len(x_grid)))  # possible rotation sizes (row vec)
+    x_vs = x_grid  # possible locations of visual cues
+    x_ps = x_grid  # possible locations of proprioceptive cues
+
+    # Ideal observer     
+    x_f_hat = np.zeros(num_trials)
+    x_state = np.zeros(num_trials)
+    K = np.zeros(num_trials)
+    mu_pert = 0
+    prior_pert = 0.5
+    
+    # If fitting model to data, use actual hand data
+    if fit == True:
+        x_f = x_hand
+    else: 
+        x_f = np.zeros(num_trials) 
+        x_f[0] = np.random.normal(0, sigma_motor)
+    
+    # Loop through trials
+    for i in range(num_trials - 1):
+        # Proprioceptive cue contains motor prediction (no way to dissociate)
+        xhat_p = x_f[i]
+
+        if vis_fb[i] == 0:
+            xhat_v = 0
+            sigma_v = 1e2
+        else:
+            xhat_v = x_f[i] + rotation[i]
+            sigma_v = 1.179 + 0.384 * np.abs(xhat_v)  # from Zhang et al 
+        J_v = 1 / sigma_v**2
+        J_pert = 1 / sigma_pert**2
+        K[i] = J_v / (J_v + J_pert)
+
+        # Compute no perturbation likelihood (working with log-probs for numerical accuracy)
+        loglik_nopert = (
+            f(xhat_p, x_fs, sigma_comb) + f(xhat_v, x_fs, sigma_v) 
+            + f(x_fs, bias, sigma_motor) 
+        )
+        loglik_nopert = logsumexp(loglik_nopert.flatten(), b=0.1)
+        likelihood_nopert = np.exp(loglik_nopert)
+
+        # Compute perturbation likelihood
+        loglik_pert = (
+            f(xhat_p, x_fs, sigma_comb) + f(xhat_v, x_fs + d_xvs, sigma_v) 
+            + f(d_xvs, mu_pert, sigma_pert) + f(x_fs, bias, sigma_motor)  
+        )
+        loglik_pert = logsumexp(loglik_pert.flatten(), b=0.01)
+        
+        # To account for no-vis fb trials
+        if vis_fb[i] == 1:
+            likelihood_pert = np.exp(loglik_pert)
+        else:
+            likelihood_pert = 0
+
+        # Posterior over Causal node
+        normalization_const = prior_pert * likelihood_pert + ((1 - prior_pert) * likelihood_nopert)
+        post_pert = (prior_pert * likelihood_pert) / normalization_const  # posterior over Cause
+
+        # Simulate trial-by-trial adaptation
+        x_state[i + 1] = post_pert * K[i] * (rotation[i]) * -1
+        if fit == False: 
+            x_f[i + 1] = bias + x_state[i + 1] + np.random.normal(0, sigma_motor)
+        
+    return x_state, x_f
+
+
+def calc_bic(ll, num_params, num_trials):
+    bic = -2 * ll + num_params * np.log(num_trials)
+    
+    return bic
+
+
+def calc_aic(ll, num_params):
+    aic = -2 * ll + 2 * num_params
+
+    return aic
