@@ -14,6 +14,9 @@ def negloglik(B=None, sigma_motor=None, sigma_int=None, sigma_pert=None,
     elif model == "piece":
         x_stl, _ = piece(sigma_pert, sigma_comb, bias, sigma_motor, num_trials, 
                       vis_fb, rotation, fit, x_hand=x_hand)
+    elif model == "piece_variant":
+        x_stl, _ = piece(sigma_pert, sigma_comb, bias, sigma_motor, num_trials, 
+                      vis_fb, rotation, fit, x_hand=x_hand)
     elif model == "ssm":
         x_stl, _ = ssm_ege(B, sigma_motor, rotation)
     elif model == "premo":
@@ -22,17 +25,10 @@ def negloglik(B=None, sigma_motor=None, sigma_int=None, sigma_pert=None,
     elif model == "rem":
         x_stl, _ = rem(sigma_comb, s, c, bias, sigma_motor, num_trials, vis_fb, rotation, 
                     fit, x_hand=x_hand)
-    
-    if model == "piece":
-        sigma0 = 0.5  # some "typical" value for sigma_pert
-        lam = 0.1  # regularization factor
-        
-        # Adding bias term to single-trial adaptation measure (mu) 
-        nll = -np.sum(-0.5 * np.log(2 * np.pi * sigma_motor**2) - ((x_hand - (x_stl + bias))**2 / (2 * sigma_motor**2)))
-    else:
-        # Adding bias term to single-trial adaptation measure (mu) 
-        nll = -np.sum(-0.5 * np.log(2 * np.pi * sigma_motor**2) - ((x_hand - (x_stl + bias))**2 / (2 * sigma_motor**2)))
-    
+
+    # Adding bias term to single-trial adaptation measure (mu) 
+    nll = -np.sum(-0.5 * np.log(2 * np.pi * sigma_motor**2) - ((x_hand - (x_stl + bias))**2 / (2 * sigma_motor**2)))
+
     return nll
 
 
