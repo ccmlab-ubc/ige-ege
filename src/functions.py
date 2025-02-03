@@ -371,23 +371,4 @@ def calc_aic(ll, num_params):
     return aic
 
 
-# def replace_outliers(z_thresh, var, subj_id):
-    
-#     # z-score var
-#     df["var" + "_z"] = df.groupby(subj_id)[var].transform(stats.zscore)
-    
-#     # Create outlier column
-#     df["var" + "_outlier"] = np.abs(df["var_z"]) > z_thresh
 
-#     # Calculate within-subject mean using non-outlier trials only
-#     df["var" + "_mean"] = df[np.abs(df["var_z"]) <= z_thresh].groupby("subj_id")["var"].transform(np.mean)
-
-#     # Replace outliers with within-subject mean values
-#     df["var_mean"] = df.groupby("subj_id")["var_mean"].transform(lambda x: x.fillna(np.nanmean(x)))
-
-#     # Create final column with "cleaned" hand angles
-#     df["var" + "_clean"] = np.where(np.abs(df["var_z"]) > z_thresh,
-#                                      df["var_mean"],
-#                                      df["var"])
-    
-#     return df["var_z"]
