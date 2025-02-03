@@ -1,6 +1,6 @@
 # ige-ege
 
-Project code and data from the article [A Bayesian model of implicit motor learning from internal and external errors](https://www.biorxiv.org/content/10.1101/2025.01.30.635749v1).
+Project code and data from the article [A Bayesian decision-making model of implicit motor learning from internal and external errors](https://www.biorxiv.org/content/10.1101/2025.01.30.635749v1).
 
 
 1) To install the same Python packages and versions I used for my analyses, you can recreate the same virtual environment by entering the following command in your terminal (within your cloned/downloaded project directory):
@@ -16,9 +16,9 @@ Project code and data from the article [A Bayesian model of implicit motor learn
     - `analyze-behavior.ipynb`
     - `model-fitting.ipynb`
     - `parameter-model-recovery.ipynb`
+      
 
-
-5) The necessary data and results for running some parts of these notebooks are found in `experiment-1/results/`.
+4) The necessary data and results for running some parts of these notebooks are found in `experiment-1/results/`.
 
 
 Correspondence: hyosub.kim [at] ubc [dot] ca
